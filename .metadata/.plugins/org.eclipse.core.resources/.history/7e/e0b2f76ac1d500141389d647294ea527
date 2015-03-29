@@ -1,0 +1,90 @@
+package uk.ac.nott.cs.g54dia.multidemo;
+import uk.ac.nott.cs.g54dia.multidemo.communication.Broadcast;
+import uk.ac.nott.cs.g54dia.multidemo.communication.Report;
+import uk.ac.nott.cs.g54dia.multidemo.communication.Request;
+import uk.ac.nott.cs.g54dia.multidemo.communication.Response;
+import uk.ac.nott.cs.g54dia.multidemo.data_structure.Goal;
+import uk.ac.nott.cs.g54dia.multidemo.worker_agent.Beliefs;
+import uk.ac.nott.cs.g54dia.multidemo.worker_agent.Desires;
+import uk.ac.nott.cs.g54dia.multidemo.worker_agent.Plans;
+import uk.ac.nott.cs.g54dia.multilibrary.*;
+
+public class IntelligentTanker extends Tanker {
+	
+	private Beliefs beliefs;
+	private Desires desires;
+	private Plans plans;
+	
+	public IntelligentTanker(int environmentSize) {
+		this.beliefs = new Beliefs(environmentSize);
+		this.desires = new Desires();
+		this.plans = new Plans();
+	}
+	
+	// deal with response from manager
+	public void onReceiveResponse(Response response) {
+		
+		int action = response.getAction();
+		
+		switch (action) {
+		case Response.UPDATE_EXPLORATIONSTATE:
+			this.beliefs.updateExplorationState();
+			break;
+		case Response.TERMINATE_EXPLORATION:
+			this.desires.terminateExploration();
+			break;
+		case Response.DO_EXPLORATION:
+			this.desires.changeDesire(Goal.TRAVERSE_MAP);
+			this.desires.setTarget(null, response.getRoute());
+			break;
+		case Response.FINISH_TASK:
+			this.desires.changeDesire(Goal.FINISH_TASK);
+			this.desires.setTarget(response.getTask(), response.getRoute());
+			break;
+		default:
+			System.out.println("No such action described in Response !!");
+			break;
+		}
+	}
+
+	@Override
+	public Action senseAndAct(Cell[][] view, long timestep) {
+		
+		// update beliefs
+		this.beliefs.updateBeliefs(view,this.getFuelLevel(),this.getWaterLevel(),this.getCurrentCell(view));
+		
+		// report to manager
+		Report report;
+		if (this.beliefs.isExplorationFinished()) {
+			report = new Report(this.beliefs.getCurrentPosition(),
+					null,
+					null,
+					this.beliefs.getDetectedTask());
+		}
+		else {
+			report = new Report(this.beliefs.getCurrentPosition(),
+					this.beliefs.getDetectedWells(),
+					this.beliefs.getDetectedStations(),
+					this.beliefs.getDetectedTask());
+		}
+		Broadcast.sendReportToManager(this, report);
+		
+		// request for task
+		this.desires.updateRoute(this.beliefs.getCurrentPosition(),this.beliefs.getFuel());
+		if (this.desires.isTargetFinished()) {
+			Request request = new Request(this.toString(),
+												this.beliefs.getCurrentPosition(),
+												this.beliefs.getFuel(),
+												this.beliefs.getWater(),
+												this.desires.getTask());
+			Response response = Broadcast.sendTaskRequestToManager(this, request);
+			
+			// update desires
+			this.onReceiveResponse(response);
+		}
+				
+		// select plan
+		return this.plans.execute(this.desires, this.beliefs);
+	}
+
+}

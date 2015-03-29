@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;uk.ac.nott.cs.g54dia.multidemo.communication.RequestTask&apos; to &apos;Request&apos;&#x0D;&#x0A;- Original project: &apos;G54DIA_Coursework2&apos;&#x0D;&#x0A;- Original element: &apos;uk.ac.nott.cs.g54dia.multidemo.communication.RequestTask&apos;&#x0D;&#x0A;- Renamed element: &apos;uk.ac.nott.cs.g54dia.multidemo.communication.Request&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;RequestTask&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;uk.ac.nott.cs.g54dia.multidemo.communication{RequestTask.java[RequestTask" matchStrategy="1" name="Request" qualified="false" references="true" similarDeclarations="false" stamp="1427598696138" textual="false" version="1.0"/>
+</session>
